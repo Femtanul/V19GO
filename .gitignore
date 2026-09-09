@@ -1,0 +1,38 @@
+# Зависимости Go
+vendor/
+go.sum
+
+# Скомпилированные бинарники
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+v19go
+/v19go
+main
+main.exe
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Отладка
+debug/
+tmp/
+*.log
+
+# Секреты
+*.key
+*.pem
+.env
+config.local.json
+
+# Системные файлы
+Thumbs.db
+Desktop.ini
