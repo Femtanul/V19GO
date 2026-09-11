@@ -37,7 +37,13 @@ func main() {
 		}
 		return client_auth.NewClientHelloMessage(sess, bytes)
 	})
-
+	f.Register(10101,func(session interface{}, bytes []byte) factory.Message{
+		sess, ok := session.(piranha.SessionInterface)
+		if !ok {
+			return nil
+		}
+		return client_auth.NewLoginMessage(sess, bytes)
+	})
 	f.Report(factory.KnownClientIDs)
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.Port))
