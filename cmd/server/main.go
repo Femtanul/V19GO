@@ -8,6 +8,7 @@ import (
 	"v19go/internal/protocol/messages/client/client_auth"
 	"v19go/internal/protocol/piranha"
 	"v19go/internal/utils/messaging"
+	"v19go/internal/database"
 )
 
 // Session - обертка над TCP-соединением
@@ -25,7 +26,21 @@ func (s *Session) GetCrypto() interface{} {
 
 func main() {
 	cfg := config.Default
+	
+	db, err := database.NewDB(database.Config{
+		Host:     "localhost",
+		Port:     5432,
+		User:     "v19go",
+		Password: "v19go",
+		DBName:   "v19go",
+	})
+	if err != nil {
+		fmt.Printf("Failed to connect to DB: %v\n", err)
+		return
+	}
+	defer db.Close()
 
+	fmt.Println("Connected to PostgreSQL!")
 	f := factory.NewFactory()
 	handler := messaging.NewHandler(f)
 
