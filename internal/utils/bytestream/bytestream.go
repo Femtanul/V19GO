@@ -124,6 +124,16 @@ func (bs *ByteStream) ReadVInt() int32 {
 	return (result >> 1) ^ (-(result & 1))
 }
 
+func (bs *ByteStream) WriteLong(value1, value2 int32) {
+	bs.WriteInt(value1)
+	bs.WriteInt(value2)
+}
+
+// ReadLong - читает Long как два int32
+func (bs *ByteStream) ReadLong() (int32, int32) {
+	return bs.ReadInt(), bs.ReadInt()
+}
+
 // === Boolean ===
 
 func (bs *ByteStream) WriteBoolean(value bool) {

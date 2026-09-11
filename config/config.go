@@ -8,6 +8,16 @@ type Config struct {
 	Minor         int    `json:"minor"`
 	Build         int    `json:"build"`
 	ServerName    string `json:"serverName"`
+
+	Database DatabaseConfig `json:"database"` 
+}
+
+type DatabaseConfig struct {
+	Host     string `json:"host"`
+	Port     int    `json:"port"`
+	User     string `json:"user"`
+	Password string `json:"password"`
+	DBName   string `json:"dbname"`
 }
 
 var Default = Config{
@@ -18,4 +28,11 @@ var Default = Config{
 	Minor:         0,
 	Build:         111,
 	ServerName:    "Sigma Brawl",
+	Database: DatabaseConfig{
+		Host:     "localhost",
+		Port:     5432,
+		User:     "v19go",
+		Password: "v19go",
+		DBName:   "v19go",
+	},
 }

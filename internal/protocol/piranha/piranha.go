@@ -1,15 +1,22 @@
 package piranha
 
 import (
+	"v19go/internal/database"
 	"v19go/internal/utils/bytestream"
 )
 
-
 type SessionInterface interface {
 	Write(data []byte) (int, error)
-	GetCrypto() interface{} // Пока заглушка
-}
+	GetCrypto() interface{}
 
+	GetDB() *database.DB
+	SetAccount(acc *database.Account)
+	GetAccount() *database.Account
+	SetLowID(id int32)
+	GetLowID() int32
+	SetToken(token string)
+	GetToken() string
+}
 
 type PiranhaMessage struct {
 	Session SessionInterface
@@ -17,7 +24,6 @@ type PiranhaMessage struct {
 	Version int16
 	Stream  *bytestream.ByteStream
 }
-
 
 func New(session SessionInterface) *PiranhaMessage {
 	return &PiranhaMessage{
@@ -28,18 +34,7 @@ func New(session SessionInterface) *PiranhaMessage {
 	}
 }
 
-func (p *PiranhaMessage) Encode() {
-
-}
-
-func (p *PiranhaMessage) GetID() int32 {
-	return p.ID
-}
-
-func (p *PiranhaMessage) Decode() {
-
-}
-
-func (p *PiranhaMessage) Process() error {
-	return nil
-}
+func (p *PiranhaMessage) GetID() int32      { return p.ID }
+func (p *PiranhaMessage) Encode()           {}
+func (p *PiranhaMessage) Decode()           {}
+func (p *PiranhaMessage) Process() error    { return nil }
