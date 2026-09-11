@@ -13,7 +13,7 @@ type Config struct {
 var Default = Config{
 	IsMaintenance: false,
 	UpdateLink:    "https://t.me/vbcbrawl",
-	Port:          1488,
+	Port:          9339,
 	Major:         19,
 	Minor:         0,
 	Build:         111,

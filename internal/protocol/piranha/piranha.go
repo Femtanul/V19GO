@@ -4,7 +4,7 @@ import (
 	"v19go/internal/utils/bytestream"
 )
 
-/
+
 type SessionInterface interface {
 	Write(data []byte) (int, error)
 	GetCrypto() interface{} // Пока заглушка
@@ -32,6 +32,9 @@ func (p *PiranhaMessage) Encode() {
 
 }
 
+func (p *PiranhaMessage) GetID() int32 {
+	return p.ID
+}
 
 func (p *PiranhaMessage) Decode() {
 
