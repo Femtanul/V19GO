@@ -6,6 +6,7 @@ import (
 	"v19go/internal/utils/bytestream"
 	"v19go/internal/utils/helper"
 	"v19go/internal/utils/messaging"
+	"v19go/internal/protocol/messages/server/home"
 )
 
 // LoginMessage - входящий пакет логина (ID: 10101)
@@ -73,5 +74,8 @@ func (m *LoginMessage) Process() error {
 	loginOK := server_auth.NewLoginOKMessage(m.Session, account)
 	messaging.Send(&loginOK.PiranhaMessage)
 
+
+	ohd := home.NewOwnHomeDataMessage(m.Session, account)
+	messaging.Send(&ohd.PiranhaMessage)
 	return nil
 }
