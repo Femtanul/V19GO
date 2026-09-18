@@ -7,6 +7,7 @@ import (
 	"v19go/internal/utils/helper"
 	"v19go/internal/utils/messaging"
 	"v19go/internal/protocol/messages/server/home"
+	"fmt"
 )
 
 // LoginMessage - входящий пакет логина (ID: 10101)
@@ -40,9 +41,16 @@ func (m *LoginMessage) Decode() {
 }
 
 // Process - логика логина
-func (m *LoginMessage) Process() error {
+func (m *LoginMessage) Process() (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("PANIC in LoginMessage.Process: %v\n", r)
+			err = fmt.Errorf("panic: %v", r)
+		}
+	}()
 
 	db := m.Session.GetDB()
+
 	if db == nil {
 		return nil
 	}
@@ -72,10 +80,11 @@ func (m *LoginMessage) Process() error {
 
 	// 6. Отправляем LoginOKMessage
 	loginOK := server_auth.NewLoginOKMessage(m.Session, account)
-	messaging.Send(&loginOK.PiranhaMessage)
+	messaging.Send(loginOK)
 
 
 	ohd := home.NewOwnHomeDataMessage(m.Session, account)
-	messaging.Send(&ohd.PiranhaMessage)
+	messaging.Send(ohd)
 	return nil
 }
+

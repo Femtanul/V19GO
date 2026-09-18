@@ -1,12 +1,15 @@
 package home
 
 import (
+	"fmt"
 	"v19go/internal/database"
+	"v19go/internal/logic/events"
+	"v19go/internal/logic/shop"
 	"v19go/internal/protocol/piranha"
 	"v19go/internal/utils/bytestream"
 )
 
-
+// OwnHomeDataMessage - домашка игрока (ID: 24101)
 type OwnHomeDataMessage struct {
 	piranha.PiranhaMessage
 	Account *database.Account
@@ -23,9 +26,25 @@ func NewOwnHomeDataMessage(session piranha.SessionInterface, account *database.A
 }
 
 func (m *OwnHomeDataMessage) Encode() {
+	// ==================== ПРОВЕРКИ ====================
+	if m == nil {
+		fmt.Println("OwnHomeData.Encode: message is nil")
+		return
+	}
+	if m.Stream == nil {
+		fmt.Println("OwnHomeData.Encode: stream is nil")
+		return
+	}
+	if m.Account == nil {
+		fmt.Println("OwnHomeData.Encode: account is nil")
+		return
+	}
+
 	acc := m.Account
 
-	// === БАЗОВЫЕ ДАННЫЕ ===
+	fmt.Printf("OwnHomeData.Encode: starting (LowID=%d, Brawlers=%d)\n", acc.LowID, len(acc.Brawlers))
+
+	// ==================== БАЗОВЫЕ ДАННЫЕ ====================
 	m.Stream.WriteVInt(0)
 	m.Stream.WriteVInt(0)
 
@@ -65,10 +84,17 @@ func (m *OwnHomeDataMessage) Encode() {
 	m.Stream.WriteVInt(0)
 	m.Stream.WriteVInt(0)
 
-	// === МАГАЗИН ===
-	m.Stream.WriteVInt(0) // пока пустой магазин
+	// ==================== МАГАЗИН ====================
+	fmt.Println("OwnHomeData.Encode: shop...")
+	shopInstance := shop.NewShop()
+	if shopInstance == nil {
+		fmt.Println("OwnHomeData.Encode: shop is nil, writing 0")
+		m.Stream.WriteVInt(0)
+	} else {
+		shopInstance.Encode(m.Stream, acc)
+	}
 
-	// === ТОКЕНЫ ===
+	// ==================== ТОКЕНЫ ====================
 	m.Stream.WriteVInt(0) // AdsArray
 	m.Stream.WriteVInt(acc.BattleTokens)
 	m.Stream.WriteVInt(0)
@@ -81,7 +107,7 @@ func (m *OwnHomeDataMessage) Encode() {
 	m.Stream.WriteString("RU")
 	m.Stream.WriteString(acc.AuthorCode)
 
-	// === ANIMATION ===
+	// ==================== АНИМАЦИИ ====================
 	m.Stream.WriteVInt(3)
 	m.Stream.WriteInt(3)
 	m.Stream.WriteInt(0) // tokensAnim
@@ -106,12 +132,60 @@ func (m *OwnHomeDataMessage) Encode() {
 
 	m.Stream.WriteVInt(0) // Array
 
-	// === СОБЫТИЯ (пока пусто) ===
-	m.Stream.WriteVInt(0) // EventSlots
-	m.Stream.WriteVInt(0) // Events
-	m.Stream.WriteVInt(0) // Coming events
+	// ==================== СОБЫТИЯ ====================
+	fmt.Println("OwnHomeData.Encode: events...")
+	eventsInstance := events.NewEvents()
+	if eventsInstance == nil {
+		fmt.Println("OwnHomeData.Encode: events is nil, writing 0")
+		m.Stream.WriteVInt(0) // EventSlots
+		m.Stream.WriteVInt(0) // Events
+		m.Stream.WriteVInt(0) // Coming events
+	} else {
+		allEvents := eventsInstance.GetAll()
 
-	// === ПРОКАЧКА ===
+		// EventSlots
+		m.Stream.WriteVInt(int32(len(allEvents)) + 1)
+		for i := int32(0); i < int32(len(allEvents))+1; i++ {
+			m.Stream.WriteVInt(i)
+		}
+
+		// Events
+		m.Stream.WriteVInt(int32(len(allEvents)))
+		for i, ev := range allEvents {
+			if ev == nil {
+				continue
+			}
+			m.Stream.WriteVInt(int32(i) + 1)
+			m.Stream.WriteVInt(int32(i) + 1)
+			m.Stream.WriteBoolean(ev.Ended)
+			m.Stream.WriteVInt(ev.Timer)
+			m.Stream.WriteVInt(ev.Reward)
+			m.Stream.WriteDataReference(15, ev.ID)
+
+			claimed := false
+			for _, id := range ev.TokensClaimed {
+				if id == acc.LowID {
+					claimed = true
+					break
+				}
+			}
+			if claimed {
+				m.Stream.WriteVInt(2)
+			} else {
+				m.Stream.WriteVInt(1)
+			}
+
+			m.Stream.WriteString("")
+			m.Stream.WriteVInt(0)
+			m.Stream.WriteBoolean(false)
+			m.Stream.WriteVInt(0)
+		}
+
+		// Coming events
+		m.Stream.WriteVInt(0)
+	}
+
+	// ==================== ПРОКАЧКА ====================
 	m.Stream.WriteVInt(8)
 	for _, i := range []int32{20, 35, 75, 140, 290, 480, 800, 1250} {
 		m.Stream.WriteVInt(i)
@@ -180,13 +254,15 @@ func (m *OwnHomeDataMessage) Encode() {
 	m.Stream.WriteVInt(0)
 	m.Stream.WriteVInt(0)
 
-	// === ИМЯ ИГРОКА ===
+	// ==================== ИМЯ ИГРОКА ====================
 	m.Stream.WriteString(acc.Name)
 	m.Stream.WriteVInt(0)
 
 	m.Stream.WriteString("")
 
-	// === БОЙЦЫ ===
+	// ==================== БОЙЦЫ ====================
+	fmt.Printf("OwnHomeData.Encode: brawlers (count=%d)...\n", len(acc.Brawlers))
+
 	m.Stream.WriteVInt(8)
 	m.Stream.WriteVInt(int32(len(acc.Brawlers)) + 4)
 
@@ -199,7 +275,7 @@ func (m *OwnHomeDataMessage) Encode() {
 		}
 	}
 
-	// === РЕСУРСЫ ===
+	// ==================== РЕСУРСЫ ====================
 	m.Stream.WriteDataReference(5, 1)
 	m.Stream.WriteVInt(acc.Box)
 
@@ -219,7 +295,7 @@ func (m *OwnHomeDataMessage) Encode() {
 		m.Stream.WriteVInt(b.Trophies)
 	}
 
-	// Ещё раз трофеи (да, в протоколе дублируется)
+	// Ещё раз трофеи
 	m.Stream.WriteVInt(int32(len(acc.Brawlers)))
 	for _, b := range acc.Brawlers {
 		m.Stream.WriteDataReference(16, b.BrawlerID)
@@ -255,7 +331,7 @@ func (m *OwnHomeDataMessage) Encode() {
 
 	m.Stream.WriteVInt(0)
 
-	// === ГЕМЫ И ПРОЧЕЕ ===
+	// ==================== ГЕМЫ И ПРОЧЕЕ ====================
 	m.Stream.WriteVInt(int32(acc.Gems))
 	m.Stream.WriteVInt(0)
 	m.Stream.WriteVInt(1)
@@ -270,8 +346,10 @@ func (m *OwnHomeDataMessage) Encode() {
 	m.Stream.WriteVInt(2)
 	m.Stream.WriteVInt(1585502369)
 
-	// === ОБНОВЛЯЕМ СЕССИЮ ===
+	// ==================== ОБНОВЛЯЕМ СЕССИЮ ====================
 	m.Session.SetLowID(acc.LowID)
+
+	fmt.Printf("OwnHomeData.Encode: DONE (size=%d)\n", len(m.Stream.GetBuffer()))
 }
 
 func (m *OwnHomeDataMessage) Decode() {}

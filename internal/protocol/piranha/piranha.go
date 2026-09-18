@@ -34,7 +34,26 @@ func New(session SessionInterface) *PiranhaMessage {
 	}
 }
 
-func (p *PiranhaMessage) GetID() int32      { return p.ID }
-func (p *PiranhaMessage) Encode()           {}
-func (p *PiranhaMessage) Decode()           {}
-func (p *PiranhaMessage) Process() error    { return nil }
+func (p *PiranhaMessage) GetID() int32 {
+	return p.ID
+}
+
+func (p *PiranhaMessage) GetVersion() int16 {
+	return p.Version
+}
+
+func (p *PiranhaMessage) GetStream() *bytestream.ByteStream {
+	return p.Stream
+}
+
+func (p *PiranhaMessage) GetSession() SessionInterface {
+	return p.Session
+}
+
+func (p *PiranhaMessage) Encode() {}
+
+func (p *PiranhaMessage) Decode() {}
+
+func (p *PiranhaMessage) Process() error {
+	return nil
+}

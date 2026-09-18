@@ -29,6 +29,6 @@ func (m *ClientHelloMessage) Decode() {
 
 func (m *ClientHelloMessage) Process() error {
 	serverHello := server_auth.NewServerHelloMessage(m.Session)
-	messaging.Send(&serverHello.PiranhaMessage)
+	messaging.Send(serverHello)
 	return nil
 }
