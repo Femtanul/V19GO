@@ -96,7 +96,7 @@ func (bs *ByteStream) WriteString(value string) {
 // === VInt ===
 
 func (bs *ByteStream) WriteVInt(value int32) {
-	zigzag := (value << 1) ^ (value >> 31)
+	zigzag := uint32((value << 1) ^ (value >> 31))
 	for {
 		b := byte(zigzag & 0x7F)
 		zigzag >>= 7
